@@ -50,18 +50,27 @@ pub fn complete_task_or_step(tasks: &mut Vec<Task>, target: &str) -> Result<Stri
         matches.at(1)
                .ok_or("Could not parse task index.".to_owned())
                .and_then(|index| index.parse::<usize>().map_err(|e| e.to_string()))
-    );
+    ) - 1;
 
-    let optional_step_index =
+    let optional_step_letter =
         matches.at(2)
                .and_then(|letter| letter.to_uppercase().chars().nth(0));
 
-    if let Some(step_index) = optional_step_index {
-        let ref mut completed_step = tasks[task_index - 1].steps[step_index as usize - 65];
+    if task_index >= tasks.len() {
+        return Err("There is no task with that number".to_owned());
+    }
+
+    if let Some(step_letter) = optional_step_letter {
+        let ref mut steps = tasks[task_index].steps;
+        let step_index = step_letter as usize - 65;
+        if step_index >= steps.len() {
+            return Err("There is no step with that letter".to_owned());
+        }
+        let ref mut completed_step = steps[step_index];
         completed_step.is_complete = true;
         Ok(format!("Completed step \"{}\"", completed_step.title))
     } else {
-        let removed_task = tasks.remove(task_index - 1);
+        let removed_task = tasks.remove(task_index);
         Ok(format!("Completed task \"{}\"", removed_task.title))
     }
 }
